@@ -1,0 +1,14 @@
+Coisas a Acrescentar
+
+Exportar memorial descritivo / Relatório Geral; 
+Sistema de Leitura Simples;
+Exportar memorial especifico;
+
+Relatório da análise Projeto;
+Algo mais intuitivo;
+
+Aba para sinalizar em qual estado estou usando o Sistema de combate a incêndio.
+
+Analise de Planta, otimizar
+
+prova social na parte do login

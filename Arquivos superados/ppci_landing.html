@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PPCI PRO IA — Inteligência para Projetos de Incêndio (CBMBA)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#08090d;
+  --bg:#0b0d13;
+  --surface:#111420;
+  --surface-2:#161a28;
+  --line:rgba(255,255,255,.08);
+  --line-strong:rgba(255,255,255,.14);
+  --txt:#eef1f7;
+  --txt-dim:#9aa3b5;
+  --txt-faint:#6b7488;
+  --flame:#ff3b2f;        /* vermelho-fogo (acento primário) */
+  --flame-2:#ff6a5e;
+  --ember:#c41208;
+  --blue:#2b7fff;         /* azul-IA (acento secundário) */
+  --blue-2:#5b9bff;
+  --blue-deep:#0b3aa0;
+  --amber:#ffb347;
+  --ok:#34d399;
+  --grad-fire:linear-gradient(135deg,#ff6a5e 0%,#ff3b2f 45%,#c41208 100%);
+  --grad-fire-soft:linear-gradient(135deg,rgba(255,106,94,.16),rgba(196,18,8,.10));
+  --grad-blue:linear-gradient(135deg,#5b9bff 0%,#2b7fff 50%,#0b3aa0 100%);
+  --grad-blue-soft:linear-gradient(135deg,rgba(91,155,255,.16),rgba(11,58,160,.10));
+  --grad-brand:linear-gradient(115deg,#ff3b2f 0%,#e0241b 42%,#2b7fff 100%);
+  --shadow:0 30px 80px -30px rgba(0,0,0,.7);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--bg);color:var(--txt);
+  line-height:1.55;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--flame);color:#fff}
+::-webkit-scrollbar{width:9px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:#262b3a;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#36405a}
+
+/* ---------- background atmosphere ---------- */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-fx .grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 0%,transparent 75%);
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 0%,transparent 75%);
+  opacity:.5;
+}
+.bg-fx .glow1,.bg-fx .glow2{position:absolute;border-radius:50%;filter:blur(90px)}
+.bg-fx .glow1{top:-180px;right:-120px;width:520px;height:520px;background:radial-gradient(circle,rgba(255,59,47,.20),transparent 65%)}
+.bg-fx .glow2{top:380px;left:-200px;width:560px;height:560px;background:radial-gradient(circle,rgba(43,127,255,.16),transparent 65%)}
+.noise{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ---------- typography helpers ---------- */
+.kicker{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--flame-2);font-weight:500}
+h1,h2,h3{font-family:'Archivo',sans-serif;font-weight:800;line-height:1.04;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(11,13,19,.72);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none}
+.logo .shield{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.wm{display:flex;flex-direction:column;line-height:1}
+.wm-row{display:flex;align-items:center;gap:6px;font-family:'Archivo';font-weight:900;font-size:21px;letter-spacing:-.01em}
+.wm-ppci{color:var(--flame)}
+.wm-pro{color:var(--blue-2)}
+.ia-badge{font-family:'Archivo';font-weight:800;font-size:11px;letter-spacing:.04em;color:#1a2236;
+  background:linear-gradient(180deg,#ffffff,#ccd2de 47%,#9aa3b5 53%,#eef1f7);
+  padding:2px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.85);}
+.logo small{display:block;font-family:'DM Sans';font-weight:500;font-size:9px;letter-spacing:.04em;color:var(--txt-faint);margin-top:4px}
+.nav-links{display:flex;gap:26px;margin-left:8px}
+.nav-links a{color:var(--txt-dim);text-decoration:none;font-size:14.5px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--txt)}
+.nav-cta{margin-left:auto;display:flex;gap:12px;align-items:center}
+.btn{font-family:'DM Sans';font-weight:600;font-size:14.5px;border:none;cursor:pointer;border-radius:10px;padding:11px 20px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:transform .15s,box-shadow .2s,background .2s;white-space:nowrap}
+.btn-ghost{background:transparent;color:var(--txt);border:1px solid var(--line-strong)}
+.btn-ghost:hover{background:rgba(255,255,255,.05)}
+.btn-fire{background:var(--grad-fire);color:#fff;box-shadow:0 10px 28px -10px rgba(255,59,47,.7)}
+.btn-fire:hover{transform:translateY(-2px);box-shadow:0 16px 36px -10px rgba(255,59,47,.85)}
+.btn-lg{padding:15px 28px;font-size:16px;border-radius:12px}
+
+/* ---------- hero ---------- */
+.hero{padding:78px 0 30px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border:1px solid var(--line-strong);border-radius:99px;background:rgba(255,255,255,.03);font-size:13px;color:var(--txt-dim);margin-bottom:30px}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-size:clamp(40px,6.6vw,76px);font-weight:900}
+.hero h1 .fire{background:var(--grad-fire);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p.sub{max-width:640px;margin:24px auto 0;font-size:clamp(16px,2vw,19px);color:var(--txt-dim)}
+.hero-cta{margin-top:38px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.hero-note{margin-top:18px;font-size:13px;color:var(--txt-faint)}
+.hero-note b{color:var(--txt-dim);font-weight:600}
+
+/* ---------- dashboard mock ---------- */
+.mock{position:relative;margin:64px auto 0;max-width:1000px;border-radius:18px;border:1px solid var(--line-strong);background:linear-gradient(180deg,var(--surface),var(--ink));box-shadow:var(--shadow);overflow:hidden}
+.mock-top{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.mock-top .dots{display:flex;gap:6px}
+.mock-top .dots i{width:11px;height:11px;border-radius:50%;background:#2a3043}
+.mock-top .url{margin-left:14px;font-family:'JetBrains Mono';font-size:12px;color:var(--txt-faint)}
+.mock-body{display:grid;grid-template-columns:200px 1fr;min-height:380px}
+.mock-side{border-right:1px solid var(--line);padding:18px 14px;background:rgba(0,0,0,.22)}
+.mock-side .si{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:12.5px;color:var(--txt-dim);margin-bottom:3px}
+.mock-side .si.on{background:var(--grad-fire-soft);color:var(--flame-2);font-weight:600}
+.mock-side .si .ic{width:15px;height:15px;flex-shrink:0}
+.mock-main{padding:24px}
+.mock-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.mock-h h4{font-family:'Archivo';font-size:18px}
+.mock-h span{font-size:11px;color:var(--txt-faint);font-family:'JetBrains Mono'}
+.mock-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.mc{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface-2)}
+.mc .lab{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-faint)}
+.mc .val{font-family:'Archivo';font-weight:800;font-size:24px;margin-top:6px}
+.mc .val.fire{color:var(--flame-2)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:110px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface-2)}
+.bars .b{flex:1;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--flame-2),var(--ember));opacity:.9}
+
+/* trust strip */
+.trust{padding:40px 0 10px;text-align:center}
+.trust p{font-family:'JetBrains Mono';font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-faint);margin-bottom:22px}
+.trust-row{display:flex;flex-wrap:wrap;gap:14px 12px;justify-content:center}
+.chip{font-family:'JetBrains Mono';font-size:13px;padding:8px 16px;border:1px solid var(--line);border-radius:8px;color:var(--txt-dim);background:rgba(255,255,255,.02)}
+.chip b{color:var(--flame-2)}
+
+/* ---------- section ---------- */
+section{padding:90px 0;position:relative}
+.sec-head{max-width:640px;margin:0 auto 56px;text-align:center}
+.sec-head h2{font-size:clamp(30px,4.4vw,46px);margin-top:14px}
+.sec-head p{margin-top:18px;color:var(--txt-dim);font-size:17px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.step{position:relative;border:1px solid var(--line);border-radius:16px;padding:30px 26px;background:var(--surface);overflow:hidden}
+.step .num{font-family:'JetBrains Mono';font-size:13px;color:var(--flame-2);font-weight:600}
+.step h3{font-size:21px;margin:16px 0 10px}
+.step p{color:var(--txt-dim);font-size:15px}
+.step .glow{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,59,47,.18),transparent 70%)}
+
+/* features grid */
+.feats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.feat{border:1px solid var(--line);border-radius:14px;padding:22px 20px;background:var(--surface);transition:transform .2s,border-color .2s,background .2s}
+.feat:hover{transform:translateY(-4px);border-color:rgba(255,106,94,.4);background:var(--surface-2)}
+.feat .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--grad-fire-soft);border:1px solid rgba(255,106,94,.25);margin-bottom:16px;color:var(--flame-2)}
+.feat h4{font-family:'Archivo';font-size:16px;font-weight:700;letter-spacing:-.01em}
+.feat .tag{font-family:'JetBrains Mono';font-size:10.5px;color:var(--txt-faint);margin-top:5px;display:block}
+.feat p{font-size:13.5px;color:var(--txt-dim);margin-top:9px;line-height:1.5}
+
+/* AI highlight */
+.ai{display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center;border:1px solid var(--line-strong);border-radius:24px;padding:48px;background:linear-gradient(135deg,var(--surface),var(--ink));position:relative;overflow:hidden}
+.ai .glow{position:absolute;bottom:-120px;right:-100px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(43,127,255,.18),transparent 65%);filter:blur(20px)}
+.ai .kicker{color:var(--blue-2)}
+.ai-txt h2{font-size:clamp(28px,3.6vw,40px);margin:16px 0 18px}
+.ai-txt p{color:var(--txt-dim);font-size:16px;margin-bottom:24px}
+.ai-list{list-style:none;display:grid;gap:13px}
+.ai-list li{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--txt)}
+.ai-list .ck{width:22px;height:22px;border-radius:6px;background:var(--grad-blue-soft);border:1px solid rgba(91,155,255,.35);display:grid;place-items:center;flex-shrink:0;color:var(--blue-2)}
+.ai-panel{position:relative;border:1px solid rgba(91,155,255,.2);border-radius:16px;background:var(--ink);padding:22px;font-family:'JetBrains Mono';font-size:13px}
+.ai-panel .row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--line)}
+.ai-panel .row:last-child{border:none}
+.ai-panel .k{color:var(--txt-faint)}
+.ai-panel .v{color:var(--txt);font-weight:500}
+.ai-panel .v.fire{color:var(--blue-2)}
+.ai-panel .scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue-2),transparent);top:0;animation:scan 3.4s ease-in-out infinite;box-shadow:0 0 12px var(--blue)}
+@keyframes scan{0%{top:8%}50%{top:92%}100%{top:8%}}
+
+/* differentiators */
+.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.diff{border-left:2px solid var(--flame);padding:6px 0 6px 22px}
+.diff h4{font-family:'Archivo';font-size:18px;margin-bottom:8px}
+.diff p{color:var(--txt-dim);font-size:14.5px}
+
+/* pricing */
+.bill{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:42px;font-size:14px;color:var(--txt-dim)}
+.toggle{width:54px;height:30px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line-strong);position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--grad-fire)}
+.toggle i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .22s}
+.toggle.on i{transform:translateX(24px)}
+.save{font-family:'JetBrains Mono';font-size:11px;color:var(--ok);border:1px solid rgba(52,211,153,.3);background:rgba(52,211,153,.08);padding:3px 9px;border-radius:99px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.plan{border:1px solid var(--line);border-radius:18px;padding:32px 28px;background:var(--surface);display:flex;flex-direction:column;position:relative}
+.plan.pop{border-color:rgba(255,106,94,.5);background:linear-gradient(180deg,var(--surface-2),var(--surface));box-shadow:0 24px 60px -28px rgba(255,59,47,.4)}
+.plan .pin{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--grad-fire);color:#fff;font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:5px 14px;border-radius:99px;font-weight:600}
+.plan .pname{font-family:'Archivo';font-weight:700;font-size:17px}
+.plan .pdesc{font-size:13px;color:var(--txt-faint);margin-top:6px;min-height:34px}
+.plan .price{font-family:'Archivo';font-weight:900;font-size:46px;margin:18px 0 2px;letter-spacing:-.03em}
+.plan .price small{font-family:'DM Sans';font-size:15px;font-weight:500;color:var(--txt-faint)}
+.plan .cur{font-size:22px;vertical-align:super;font-weight:700}
+.plan ul{list-style:none;margin:22px 0 26px;display:grid;gap:12px}
+.plan li{display:flex;gap:11px;font-size:14px;color:var(--txt-dim);align-items:flex-start}
+.plan li .ck{color:var(--flame-2);flex-shrink:0}
+.plan .btn{width:100%;justify-content:center;margin-top:auto}
+
+/* faq */
+.faq{max-width:780px;margin:0 auto;display:grid;gap:12px}
+.q{border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow:hidden}
+.q summary{list-style:none;cursor:pointer;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;font-family:'Archivo';font-weight:600;font-size:16.5px}
+.q summary::-webkit-details-marker{display:none}
+.q summary .pm{font-size:22px;color:var(--flame-2);transition:transform .2s;font-weight:400}
+.q[open] summary .pm{transform:rotate(45deg)}
+.q .a{padding:0 24px 22px;color:var(--txt-dim);font-size:15px;line-height:1.6}
+
+/* final cta */
+.final{text-align:center;border:1px solid var(--line-strong);border-radius:26px;padding:70px 30px;background:linear-gradient(135deg,rgba(255,59,47,.10),rgba(224,36,27,.05));position:relative;overflow:hidden}
+.final .glow{position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 120%,rgba(255,59,47,.25),transparent 70%)}
+.final h2{font-size:clamp(30px,4.6vw,50px);position:relative}
+.final p{position:relative;color:var(--txt-dim);font-size:18px;margin:18px auto 34px;max-width:540px}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:46px 0 36px;position:relative;z-index:2}
+.foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+.foot .logo{font-size:16px}
+.foot small{color:var(--txt-faint);font-size:13px;max-width:420px;display:block;margin-top:10px;line-height:1.5}
+.foot-links{display:flex;gap:24px}
+.foot-links a{color:var(--txt-dim);text-decoration:none;font-size:14px}
+.foot-links a:hover{color:var(--txt)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:900px){
+  .nav-links{display:none}
+  .mock-body{grid-template-columns:1fr}
+  .mock-side{display:none}
+  .steps,.feats,.diffs,.plans{grid-template-columns:1fr}
+  .feats{grid-template-columns:1fr 1fr}
+  .ai{grid-template-columns:1fr;padding:32px}
+  section{padding:64px 0}
+}
+@media(max-width:560px){.feats{grid-template-columns:1fr}.mock-cards{grid-template-columns:1fr 1fr}.logo small{display:none}.wm-row{font-size:19px}}
+</style>
+</head>
+<body>
+
+<!-- LOGO SHIELD — símbolo reutilizável -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gRed" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5a4d"/><stop offset=".55" stop-color="#e0241b"/><stop offset="1" stop-color="#9c0f06"/>
+    </linearGradient>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f93ff"/><stop offset=".55" stop-color="#1f63e8"/><stop offset="1" stop-color="#0a2f8c"/>
+    </linearGradient>
+    <symbol id="shield" viewBox="0 0 100 116">
+      <!-- metade esquerda (fogo) -->
+      <path d="M50 7 L14 18 L14 58 C14 86 30 103 50 111 Z" fill="url(#gRed)"/>
+      <!-- metade direita (IA) -->
+      <path d="M50 7 L86 18 L86 58 C86 86 70 103 50 111 Z" fill="url(#gBlue)"/>
+      <!-- chama branca -->
+      <g transform="translate(16.5,33) scale(1.36)" fill="#fff">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+      </g>
+      <!-- circuito branco -->
+      <g stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M56 58 H65 M65 58 L74 47 M65 58 H79 M65 58 L74 69"/>
+      </g>
+      <circle cx="56" cy="58" r="2.9" fill="#fff"/>
+      <circle cx="74" cy="47" r="3.1" fill="#fff"/>
+      <circle cx="79" cy="58" r="3.1" fill="#fff"/>
+      <circle cx="74" cy="69" r="3.1" fill="#fff"/>
+      <!-- divisória central -->
+      <line x1="50" y1="8" x2="50" y2="110" stroke="#0b0d13" stroke-width="2.4"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="bg-fx"><div class="grid"></div><div class="glow1"></div><div class="glow2"></div></div>
+<div class="noise"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-in">
+    <a href="#top" class="logo">
+      <svg class="shield"><use href="#shield"/></svg>
+      <span class="wm">
+        <span class="wm-row"><span class="wm-ppci">PPCI</span><span class="wm-pro">PRO</span><span class="ia-badge">IA</span></span>
+        <small>Inteligência para Projetos de Incêndio</small>
+      </span>
+    </a>
+    <div class="nav-links">
+      <a href="#como">Como funciona</a>
+      <a href="#modulos">Módulos</a>
+      <a href="#ia">Análise por IA</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-ghost">Entrar</a>
+      <a href="#planos" class="btn btn-fire">Começar grátis</a>
+    </div>
+  </div>
+</nav>
+
+<div id="top"></div>
+
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="badge rv"><span class="dot"></span> Conforme as Instruções Técnicas do CBMBA</div>
+  <h1 class="rv">Dimensione seu projeto de<br><span class="fire">incêndio em minutos</span>, não em dias</h1>
+  <p class="sub rv">Classificação automática da edificação, cálculo de todos os sistemas exigidos e memorial pronto para protocolo. Toda a engenharia das ITs do Corpo de Bombeiros da Bahia, em uma única plataforma.</p>
+  <div class="hero-cta rv">
+    <a href="#planos" class="btn btn-fire btn-lg">Criar conta grátis
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <a href="#como" class="btn btn-ghost btn-lg">Ver como funciona</a>
+  </div>
+  <p class="hero-note rv"><b>Até 3 projetos grátis</b> · Sem cartão de crédito · Exportação em PDF incluída</p>
+
+  <!-- DASHBOARD MOCK -->
+  <div class="mock rv">
+    <div class="mock-top">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url mono">app.ppcipro.com.br / projetos / ed-comercial-salvador</span>
+    </div>
+    <div class="mock-body">
+      <aside class="mock-side">
+        <div class="si on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Novo Projeto</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Análise de Planta</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Projeto Simplificado</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>Hidrantes</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>SPDA</div>
+        <div class="si"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar</div>
+      </aside>
+      <div class="mock-main">
+        <div class="mock-h">
+          <div><h4>Ed. Comercial Salvador Center</h4><span class="mono">D-1 · Serviços profissionais · 4.820 m²</span></div>
+          <span class="mono" style="color:var(--ok)">● Projeto Técnico</span>
+        </div>
+        <div class="mock-cards">
+          <div class="mc"><div class="lab">População</div><div class="val">612</div></div>
+          <div class="mc"><div class="lab">Sistemas exigidos</div><div class="val fire">09</div></div>
+          <div class="mc"><div class="lab">Saídas</div><div class="val">04</div></div>
+        </div>
+        <div class="bars">
+          <div class="b" style="height:42%"></div><div class="b" style="height:68%"></div>
+          <div class="b" style="height:55%"></div><div class="b" style="height:88%"></div>
+          <div class="b" style="height:73%"></div><div class="b" style="height:96%"></div>
+          <div class="b" style="height:61%"></div><div class="b" style="height:80%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TRUST -->
+<div class="trust wrap rv">
+  <p>Construído sobre as Instruções Técnicas oficiais</p>
+  <div class="trust-row">
+    <span class="chip"><b>IT-11</b> Saídas de emergência</span>
+    <span class="chip"><b>IT-14</b> Carga de incêndio</span>
+    <span class="chip"><b>IT-21</b> Extintores</span>
+    <span class="chip"><b>IT-42</b> Projeto Simplificado</span>
+    <span class="chip"><b>NBR 15219</b> Plano de emergência</span>
+    <span class="chip"><b>+700</b> ocupações catalogadas</span>
+  </div>
+</div>
+
+<!-- COMO FUNCIONA -->
+<section id="como" class="wrap">
+  <div class="sec-head rv">
+    <span class="kicker">Fluxo de trabalho</span>
+    <h2>Do cadastro ao memorial em 3 passos</h2>
+    <p>Pare de cruzar tabelas manualmente. Informe os dados da edificação e deixe a plataforma fazer o enquadramento e o dimensionamento.</p>
+  </div>
+  <div class="steps">
+    <div class="step rv"><div class="glow"></div><div class="num">PASSO 01</div><h3>Cadastre a edificação</h3><p>Digite área, altura, pavimentos e ocupação — ou envie a planta e deixe a IA preencher. A classificação por Grupo e Divisão é automática.</p></div>
+    <div class="step rv"><div class="glow"></div><div class="num">PASSO 02</div><h3>Dimensione os sistemas</h3><p>A plataforma define se é PTS ou Projeto Técnico, lista os sistemas exigidos e calcula cada um conforme a IT correspondente.</p></div>
+    <div class="step rv"><div class="glow"></div><div class="num">PASSO 03</div><h3>Revise e exporte</h3><p>Confira os resultados, ajuste o que precisar e gere o memorial em PDF, com responsável técnico e dados de protocolo.</p></div>
+  </div>
+</section>
+
+<!-- MODULOS -->
+<section id="modulos" class="wrap">
+  <div class="sec-head rv">
+    <span class="kicker">Módulos de cálculo</span>
+    <h2>Todos os sistemas, num só lugar</h2>
+    <p>Cada módulo segue a metodologia da Instrução Técnica aplicável — sem planilhas soltas, sem retrabalho.</p>
+  </div>
+  <div class="feats">
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></div><h4>População</h4><span class="tag">IT-11</span><p>Cálculo da lotação por densidade de ocupação para dimensionar saídas.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><h4>Carga de Incêndio</h4><span class="tag">IT-14</span><p>Determinação do risco a partir da ocupação e da carga em MJ/m².</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V8a4 4 0 0 1 4-4h4"/></svg></div><h4>Caminhamento</h4><span class="tag">IT-11</span><p>Distâncias máximas a percorrer até a saída, com e sem chuveiros.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7v4l-2 4h18l-2-4V9a7 7 0 0 0-7-7z"/></svg></div><h4>Brigada de Incêndio</h4><span class="tag">NBR 14276</span><p>Composição mínima da brigada por população fixa e nível de risco.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></div><h4>Iluminação de Emerg.</h4><span class="tag">IT-18</span><p>Pontos de iluminação, autonomia e cobertura das rotas de fuga.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div><h4>Sinalização</h4><span class="tag">IT-20</span><p>Placas de orientação e salvamento dimensionadas por área e percurso.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><h4>Detecção e Alarme</h4><span class="tag">IT-19</span><p>Distribuição de detectores e acionadores conforme a ocupação.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4z"/><path d="M8 10v4M16 10v4M12 10v4M10 18h4"/></svg></div><h4>Chuveiros Automáticos</h4><span class="tag">IT-23</span><p>Densidade, área de operação e quantidade de sprinklers por risco.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4>SPDA</h4><span class="tag">NBR 5419</span><p>Avaliação de necessidade e nível de proteção contra descargas atmosféricas.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 3V1.5M14 3V1.5"/></svg></div><h4>GLP</h4><span class="tag">IT-28</span><p>Classificação e distâncias de segurança para centrais de gás.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></div><h4>Pressurização de Escada</h4><span class="tag">IT-13</span><p>Controle de fumaça e enquadramento do tipo de escada por altura.</p></div>
+    <div class="feat rv"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"/><circle cx="6.5" cy="17" r="1.5"/><circle cx="17.5" cy="17" r="1.5"/></svg></div><h4>Hidrantes Isométrico</h4><span class="tag">IT-22</span><p>Cálculo hidráulico de vazão, pressão e reserva técnica de incêndio.</p></div>
+  </div>
+</section>
+
+<!-- IA -->
+<section id="ia" class="wrap">
+  <div class="ai rv">
+    <div class="glow"></div>
+    <div class="ai-txt">
+      <span class="kicker">Inteligência Artificial</span>
+      <h2>Envie a planta. Receba o enquadramento.</h2>
+      <p>O módulo de Análise de Planta interpreta o arquivo enviado e sugere a classificação da edificação, o processo aplicável e as pendências que merecem sua atenção — você confirma e segue para o dimensionamento.</p>
+      <ul class="ai-list">
+        <li><span class="ck"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> Sugestão automática de Grupo, Divisão e ocupação</li>
+        <li><span class="ck"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> Indicação de PTS ou Projeto Técnico Completo</li>
+        <li><span class="ck"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> Lista de pendências para confirmação manual</li>
+        <li><span class="ck"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> Projeto criado com 1 clique, pronto para calcular</li>
+      </ul>
+    </div>
+    <div class="ai-panel">
+      <div class="scan"></div>
+      <div class="row"><span class="k">Arquivo</span><span class="v">planta_pavto_tipo.pdf</span></div>
+      <div class="row"><span class="k">Grupo / Divisão</span><span class="v fire">D — D-1</span></div>
+      <div class="row"><span class="k">Ocupação</span><span class="v">Serviços profissionais</span></div>
+      <div class="row"><span class="k">Risco</span><span class="v">Moderado</span></div>
+      <div class="row"><span class="k">Processo</span><span class="v fire">Projeto Técnico</span></div>
+      <div class="row"><span class="k">Confiança</span><span class="v">94%</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- DIFERENCIAIS -->
+<section class="wrap">
+  <div class="sec-head rv">
+    <span class="kicker">Por que o PPCI PRO</span>
+    <h2>Feito por quem vive o protocolo</h2>
+  </div>
+  <div class="diffs">
+    <div class="diff rv"><h4>Base de ocupações completa</h4><p>Mais de 700 atividades catalogadas por CNAE, com divisão e carga de incêndio segundo o Anexo da IT-14.</p></div>
+    <div class="diff rv"><h4>Enquadramento sem erro</h4><p>A lógica de PTS × Projeto Técnico é aplicada automaticamente — sem dúvida sobre qual processo seguir.</p></div>
+    <div class="diff rv"><h4>Memorial pronto para protocolar</h4><p>Exportação em PDF com tabelas técnicas, responsável e CREA, no formato esperado pela análise.</p></div>
+    <div class="diff rv"><h4>Tudo na nuvem</h4><p>Seus projetos salvos e acessíveis de qualquer lugar, do escritório à vistoria em campo.</p></div>
+    <div class="diff rv"><h4>Cálculo hidráulico real</h4><p>Hidrantes com dimensionamento isométrico de vazão e pressão — não apenas uma tabela estática.</p></div>
+    <div class="diff rv"><h4>Atualizado com as ITs</h4><p>Acompanha as Instruções Técnicas vigentes do Corpo de Bombeiros da Bahia.</p></div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section id="planos" class="wrap">
+  <div class="sec-head rv">
+    <span class="kicker">Planos</span>
+    <h2>Comece grátis. Cresça quando precisar.</h2>
+    <p>Sem cartão para começar. Faça upgrade só quando seus projetos exigirem.</p>
+  </div>
+  <div class="bill rv">
+    <span id="lblM" style="color:var(--txt)">Mensal</span>
+    <div class="toggle" id="toggle" role="switch" aria-checked="false"><i></i></div>
+    <span id="lblA">Anual</span>
+    <span class="save">2 meses grátis</span>
+  </div>
+  <div class="plans">
+    <div class="plan rv">
+      <div class="pname">Gratuito</div>
+      <div class="pdesc">Para conhecer a plataforma e tocar projetos pontuais.</div>
+      <div class="price"><span class="cur">R$</span>0</div>
+      <div style="font-size:13px;color:var(--txt-faint)">para sempre</div>
+      <ul>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Até 3 projetos ativos</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Todos os módulos de cálculo</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Exportação em PDF</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Consulta de carga de incêndio</li>
+      </ul>
+      <a href="#" class="btn btn-ghost">Criar conta grátis</a>
+    </div>
+    <div class="plan pop rv">
+      <span class="pin">Mais popular</span>
+      <div class="pname">Profissional</div>
+      <div class="pdesc">Para o profissional que protocola projetos toda semana.</div>
+      <div class="price"><span class="cur">R$</span><span data-m="49" data-a="41">49</span><small>/mês</small></div>
+      <div style="font-size:13px;color:var(--txt-faint)">por usuário</div>
+      <ul>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Projetos ilimitados</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Análise de planta com IA</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Memorial com sua identidade e CREA</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Hidrantes isométrico completo</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Suporte prioritário</li>
+      </ul>
+      <a href="https://pay.kiwify.com.br/BHLRqDV" target="_blank" rel="noopener" class="btn btn-fire">Assinar Profissional</a>
+    </div>
+    <div class="plan rv">
+      <div class="pname">Escritório</div>
+      <div class="pdesc">Para equipes que dividem projetos e padrões.</div>
+      <div class="price"><span class="cur">R$</span><span data-m="149" data-a="124">149</span><small>/mês</small></div>
+      <div style="font-size:13px;color:var(--txt-faint)">até 5 usuários</div>
+      <ul>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Tudo do Profissional</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Projetos compartilhados pela equipe</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Modelos de memorial do escritório</li>
+        <li><span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Gestão de membros e permissões</li>
+      </ul>
+      <a href="#" class="btn btn-ghost">Falar com vendas</a>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:12.5px;color:var(--txt-faint);margin-top:26px" class="rv">A ferramenta auxilia o dimensionamento técnico. A responsabilidade pelo projeto e pela ART/RRT permanece do profissional habilitado.</p>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="wrap">
+  <div class="sec-head rv">
+    <span class="kicker">Dúvidas frequentes</span>
+    <h2>Perguntas que todo projetista faz</h2>
+  </div>
+  <div class="faq">
+    <details class="q rv"><summary>O PPCI PRO substitui o engenheiro responsável? <span class="pm">+</span></summary><div class="a">Não. A plataforma acelera e organiza o dimensionamento conforme as Instruções Técnicas, mas a responsabilidade técnica, a assinatura e a ART/RRT do projeto continuam sendo do profissional habilitado.</div></details>
+    <details class="q rv"><summary>Os cálculos seguem as normas do CBMBA? <span class="pm">+</span></summary><div class="a">Sim. Cada módulo é construído sobre a Instrução Técnica aplicável (IT-11, IT-14, IT-21, IT-42, entre outras) e normas associadas como NBR 5419 e NBR 15219. Você confere todos os resultados antes de exportar.</div></details>
+    <details class="q rv"><summary>Preciso pagar para testar? <span class="pm">+</span></summary><div class="a">Não. O plano gratuito libera até 3 projetos, com todos os módulos de cálculo e exportação em PDF, sem necessidade de cartão de crédito.</div></details>
+    <details class="q rv"><summary>Como funciona a análise de planta por IA? <span class="pm">+</span></summary><div class="a">Você envia o arquivo da planta e a plataforma sugere a classificação da edificação, o processo aplicável e as pendências a revisar. Você confirma os dados e o projeto já fica pronto para o dimensionamento.</div></details>
+    <details class="q rv"><summary>Posso exportar o memorial para protocolo? <span class="pm">+</span></summary><div class="a">Sim. A exportação gera um PDF com as tabelas técnicas, dados do responsável e do CREA, no formato adequado para acompanhar o processo junto ao Corpo de Bombeiros.</div></details>
+    <details class="q rv"><summary>Meus projetos ficam salvos? <span class="pm">+</span></summary><div class="a">Sim. Tudo é salvo na nuvem e fica acessível de qualquer dispositivo, com seu login. Você retoma um projeto de onde parou, no escritório ou em campo.</div></details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="wrap">
+  <div class="final rv">
+    <div class="glow"></div>
+    <h2>Seu próximo projeto pode<br>sair hoje.</h2>
+    <p>Crie sua conta gratuita e dimensione a primeira edificação em poucos minutos.</p>
+    <a href="#" class="btn btn-fire btn-lg" style="position:relative">Começar agora — é grátis
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="wrap">
+  <div class="foot">
+    <div>
+      <div class="logo">
+        <svg class="shield"><use href="#shield"/></svg>
+        <span class="wm">
+          <span class="wm-row"><span class="wm-ppci">PPCI</span><span class="wm-pro">PRO</span><span class="ia-badge">IA</span></span>
+          <small>Inteligência para Projetos de Incêndio</small>
+        </span>
+      </div>
+      <small>Plataforma de dimensionamento de projetos de Prevenção e Proteção Contra Incêndio conforme as Instruções Técnicas do Corpo de Bombeiros Militar da Bahia.</small>
+    </div>
+    <div class="foot-links">
+      <a href="#como">Como funciona</a>
+      <a href="#modulos">Módulos</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </div>
+  <small style="display:block;margin-top:28px;color:var(--txt-faint);font-size:12px">© 2025 PPCI PRO · Não substitui a responsabilidade técnica do profissional habilitado.</small>
+</footer>
+
+<script>
+// scroll reveal
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(Math.min(i%4,3)*70)+'ms';io.observe(el)});
+
+// billing toggle
+const t=document.getElementById('toggle'),lblM=document.getElementById('lblM'),lblA=document.getElementById('lblA');
+let annual=false;
+t.addEventListener('click',()=>{
+  annual=!annual;
+  t.classList.toggle('on',annual);
+  t.setAttribute('aria-checked',annual);
+  lblM.style.color=annual?'var(--txt-faint)':'var(--txt)';
+  lblA.style.color=annual?'var(--txt)':'var(--txt-faint)';
+  document.querySelectorAll('.price [data-m]').forEach(s=>{
+    s.textContent=annual?s.dataset.a:s.dataset.m;
+  });
+});
+</script>
+</body>
+</html>
