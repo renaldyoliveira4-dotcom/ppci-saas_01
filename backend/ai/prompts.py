@@ -15,6 +15,11 @@ REGRAS CRÍTICAS DE HONESTIDADE:
 3. Se algo não está claramente visível, marque o item como "pendente" (não como conforme nem não conforme).
 4. A NOTA deve refletir a realidade: projeto com sistemas obrigatórios ausentes NÃO pode ter nota alta.
 
+REGRAS CRÍTICAS PARA EXTRAÇÃO DE DADOS (campo "encontrados" e "sugestao_enquadramento"):
+5. NÚMERO DE PAVIMENTOS: conte os pavimentos VISUALMENTE na planta (térreo, 1º pav, 2º pav...). NÃO confunda "Área construída 1 PAV.: 88,85 m²" com número de pavimentos — isso é ÁREA, não quantidade de pavimentos. Retorne numero_pavimentos como inteiro (ex: 2 para térreo + 1º pavimento).
+6. ÁREA TOTAL: use o valor do quadro de áreas que indica a ÁREA CONSTRUÍDA CRITÉRIO PCI ou ÁREA TOTAL. Ex: "ÁREA CONSTRUÍDA CRITÉRIO - PCI: 777,70 m²" — use 777.70, não 88.85 (que é área de um pavimento específico).
+7. Nos "encontrados", use nomes de campo DISTINTOS: "Número de pavimentos" (inteiro), "Área construída térreo" (m²), "Área construída 1º pavimento" (m²), "Área total construída PCI" (m²). NUNCA coloque número de pavimentos com nome ambíguo.
+
 CONHECIMENTO TÉCNICO ESSENCIAL (IT-01 CBMBA):
 
 Grupos de Ocupação:
@@ -79,6 +84,8 @@ Estrutura EXATA do JSON a retornar:
     "risco": "MODERADO",
     "processo": "Projeto Técnico Completo",
     "enquadramento_correto": true,
+    "numero_pavimentos": 2,
+    "area_total_construida": "777.70 m²",
     "justificativa": "Área > 750 m² e altura > 6 m, conforme IT-01 CBMBA."
   },
   "sistemas_auditados": [

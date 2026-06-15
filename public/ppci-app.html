@@ -1697,8 +1697,11 @@ const AnalisePlantaPage=({setPage,setProjects,setSelProj,salvarProjeto,session,p
           {(()=>{
             const enq=result.sugestao_enquadramento||{};
             const ext=(regex,padrao=0)=>{const item=(result.encontrados||[]).find(d=>regex.test(d.campo||""));if(!item)return padrao;const m=String(item.valor||"").replace(/\./g,"").replace(",",".").match(/(\d+(?:\.\d+)?)/);return m?Number(m[1]):padrao;};
-            const area=ext(/área.*constru|construída|construido/i);
-            const pav=ext(/pavimento/i,1);
+            const area=ext(/área.*total.*constru|área.*constru.*total|área construída.*pci|critério.*pci/i) || ext(/área.*constru|construída|construido/i);
+            // Extrai pavimentos apenas de campos que falem especificamente de quantidade/número de pavimentos
+            // Nunca de campos como "Área construída 1 PAV." que contém "PAV" mas representa área
+            const pavRaw=ext(/^n[uú]mero\s+de\s+pavimento|^qtd.*pavimento|^pavimentos\s*:/i,0);
+            const pav=pavRaw>0?Math.min(Math.round(pavRaw),50):Math.min(Math.round(enq.numero_pavimentos||1),50)||1;
             const alt=ext(/altura/i);
             const grupo=(enq.grupo||"D").toUpperCase();
             let divisao=enq.divisao||"D-1"; if(divisao&&!divisao.includes("-")&&grupo)divisao=grupo+"-"+divisao; divisao=divisao.toUpperCase();
@@ -1762,10 +1765,15 @@ const AnalisePlantaPage=({setPage,setProjects,setSelProj,salvarProjeto,session,p
             const m=String(item.valor||"").replace(/\./g,"").replace(",",".").match(/(\d+(?:\.\d+)?)/);
             return m?Number(m[1]):padrao;
           };
-          const area=extrair(/área.*constru|construída|construido/i);
-          const pavRaw=extrair(/^n[uú]mero.*pavimento|^pavimentos/i,1);
-          // Limita pavimentos a 50 para evitar extração incorreta de outros números da planta
-          const pav=Math.min(Math.max(Math.round(pavRaw)||1,1),50);
+          // Busca área total (critério PCI) primeiro, depois área construída genérica
+          const area=extrair(/área.*total.*constru|área.*constru.*total|área construída.*pci|critério.*pci/i)
+                  || extrair(/área construída\s*$/i)
+                  || extrair(/área.*constru|construída/i);
+          // Pavimentos: busca apenas campos específicos de número de pavimentos
+          // NUNCA usa campos como "Área construída 1 PAV." que contêm "pav" mas representam área
+          const enqLocal=result.sugestao_enquadramento||{};
+          const pavRaw=extrair(/^n[uú]mero\s+de\s+pavimento|^qtd.*pavimento|^pavimentos\s*:/i,0);
+          const pav=pavRaw>0?Math.min(Math.round(pavRaw),50):Math.min(Math.round(enqLocal.numero_pavimentos||1),50)||1;
           const alt=extrair(/altura/i);
           const enq=result.sugestao_enquadramento||{};
           const grupo=(enq.grupo||"").toUpperCase();
