@@ -1763,7 +1763,9 @@ const AnalisePlantaPage=({setPage,setProjects,setSelProj,salvarProjeto,session,p
             return m?Number(m[1]):padrao;
           };
           const area=extrair(/área.*constru|construída|construido/i);
-          const pav=extrair(/pavimento/i,1);
+          const pavRaw=extrair(/^n[uú]mero.*pavimento|^pavimentos/i,1);
+          // Limita pavimentos a 50 para evitar extração incorreta de outros números da planta
+          const pav=Math.min(Math.max(Math.round(pavRaw)||1,1),50);
           const alt=extrair(/altura/i);
           const enq=result.sugestao_enquadramento||{};
           const grupo=(enq.grupo||"").toUpperCase();
